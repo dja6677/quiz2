@@ -909,8 +909,8 @@
 
   // 「通知FB客服驗證」框：新註冊、還沒驗證的人都會看到（阿嬤不用打字，傳貼圖就好）
   function verifyBoxHtml() {
-    return '<div class="verify-box"><div class="vb-title">📩 最後一步：通知客服驗證</div>' +
-      '打開後，<b>傳任意一個貼圖</b>就完成了<br>驗證後購物金就能使用' +
+    return '<div class="verify-box"><div class="vb-title">📩 新客要通知客服驗證</div>' +
+      '打開後，<b>傳任意一個貼圖</b>就完成了<br>驗證後數小時，購物金就能使用' +
       (MESSENGER ? '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">通知FB客服驗證</a>' : '') +
       '</div>';
   }
