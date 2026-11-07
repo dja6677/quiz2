@@ -961,8 +961,9 @@
     const p = loadPending();
     const stillPending = p && p.resultCode === r.resultCode && Date.now() <= p.deadlineMs;
     if (!stillPending) {
+      const why = Date.now() > (r.deadlineMs || 0) ? '這次的成績已超過期限，沒有存入' : '這次的成績已無法存入';
       el.innerHTML = note + '<div class="page-title">本輪 ' + escapeHtml(r.amount) + ' 元購物金</div>' +
-        '<div class="final-msg">這次的成績已超過期限，沒有存入</div>' + memberButtonsHtml();
+        '<div class="final-msg">' + why + '</div>' + memberButtonsHtml();
       return;
     }
     // 還沒存入：寫明期限（具體日期時間，不寫「24 小時」），大按鈕去輸入手機
@@ -1279,11 +1280,22 @@
 
   // ===== 啟動 =====
   function boot() {
+    // 測試用：網址加 ?reset=1 清掉這台手機記得的本輪、登入、未存入成績（只清手機，不動試算表）
+    if (new URLSearchParams(location.search).get('reset') === '1') {
+      [STORE_KEY, AUTH_KEY, PENDING_KEY].forEach(lsDel);
+      const u = new URL(location.href);
+      u.searchParams.delete('reset');
+      location.replace(u.toString());
+      return;
+    }
     AUTH = lsGet(AUTH_KEY);
     if (AUTH && !AUTH.token) AUTH = null;
-    callGasApi('init', { token: token() }).then(function (d) {
+    const pending = loadPending();
+    callGasApi('init', { token: token(), pendingCode: pending ? pending.resultCode : '' }).then(function (d) {
       let logoutMsg = '';
       if (d.loggedOut) { clearAuth(); logoutMsg = d.loggedOutMsg; }
+      // 手機記得的未存入成績，後端說已不能存入（已存過、過期、資料不存在）→ 清掉提醒，以後端為準
+      if (pending && d.pendingValid === false) clearPending();
       if (d.member && AUTH) saveAuth(AUTH.token, d.member); // 名字、手機以後端為準
       MESSENGER = d.messengerUrl || '';
       renderMemberBar();
