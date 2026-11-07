@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>有獎問答｜天生一對</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* 字級一律 rem，整體放大縮小只改這裡的 17px（同 V1） */
+  html { font-size: 17px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; color: #222; }
+
+  .header { background: #4a90d9; color: #fff; padding: 0.833rem 1rem; border-radius: 0.417rem; margin-bottom: 0.833rem; }
+  .brand-row { position: relative; text-align: center; }
+  .brand-tag { position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.85; }
+  .brand-name { font-size: 1.667rem; font-weight: bold; }
+  .header p { font-size: 0.917rem; opacity: 0.85; margin-top: 0.25rem; text-align: center; }
+
+  /* 目前登入列（家人可能共用手機，一直顯示是誰） */
+  .member-bar { display: none; background: #eaf2fb; border: 1px solid #c9dcf2; border-radius: 0.417rem; padding: 0.5rem 0.75rem;
+    margin-bottom: 0.833rem; font-size: 1rem; line-height: 1.5; text-align: center; color: #234; }
+  .member-bar button { background: none; border: none; color: #1565c0; text-decoration: underline; font-size: 1rem; font-family: inherit; cursor: pointer; padding: 0.25rem; }
+
+  /* 首頁提醒（未存入的成績） */
+  .notice { display: none; border-radius: 0.417rem; padding: 0.75rem; margin-bottom: 0.833rem; font-size: 1.083rem; line-height: 1.6; text-align: center; }
+  .notice-warn { background: #fff3e0; border: 2px solid #f39c12; color: #8a4b00; }
+  .notice-gray { background: #eee; color: #666; }
+  .notice-info { background: #fdecea; color: #a93226; }
+
+  .card { background: #fff; border-radius: 0.417rem; padding: 1rem; margin-bottom: 0.833rem; box-shadow: 0 1px 0.167rem rgba(0,0,0,0.1); }
+
+  .quiz-deadline { font-size: 0.917rem; color: #4a90d9; text-align: center; margin-bottom: 0.333rem; }
+  .progress { font-size: 1rem; color: #888; margin-bottom: 0.417rem; display: flex; justify-content: space-between; }
+  .diff-mark { color: #ccc; }
+
+  .timer-track { height: 0.417rem; border-radius: 0.25rem; background: #eee; overflow: hidden; margin-bottom: 0.75rem; }
+  .timer-fill { height: 100%; width: 100%; background: #27ae60; animation: timerShrink 15s linear forwards; }
+  @keyframes timerShrink {
+    0%   { width: 100%; background: #27ae60; }
+    60%  { background: #e67e22; }
+    85%  { background: #c0392b; }
+    100% { width: 0%; background: #c0392b; }
+  }
+
+  .question-text { font-size: 1.25rem; line-height: 1.5; margin-bottom: 0.833rem; }
+
+  .option-btn {
+    display: block; width: 100%; text-align: left; padding: 0.75rem 0.833rem; margin-bottom: 0.583rem;
+    border: 2px solid #ddd; border-radius: 0.417rem; background: #fff; color: #222;
+    font-size: 1.125rem; font-family: inherit; cursor: pointer; line-height: 1.4;
+  }
+  .option-btn:last-child { margin-bottom: 0; }
+  .option-btn:disabled { cursor: not-allowed; }
+  .option-btn.correct { background: #d4efdf; border-color: #1e8449; color: #1e8449; font-weight: bold; }
+  .option-btn.wrong { background: #fde8e8; border-color: #c0392b; color: #c0392b; font-weight: bold; }
+
+  .feedback { padding: 0.75rem 0.917rem; border-radius: 0.417rem; font-size: 1.167rem; margin-bottom: 0.833rem; line-height: 1.5; }
+  .feedback-ok  { background: #d4efdf; color: #1e8449; }
+  .feedback-bad { background: #fde8e8; color: #c0392b; }
+  .feedback-timeout { background: #fff3cd; color: #856404; }
+
+  .chat-prompt { font-size: 1.167rem; margin-bottom: 0.833rem; text-align: center; }
+  .chat-actions { display: flex; gap: 0.583rem; }
+  .btn { padding: 0.75rem; border: none; border-radius: 0.417rem; font-size: 1.167rem; color: #fff; cursor: pointer; font-family: inherit; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-skip { background: #999; flex: 1; }
+  .btn-chat { background: #8e44ad; flex: 1; }
+  .btn-next { background: #4a90d9; width: 100%; margin-top: 0.833rem; }
+  /* 阿嬤友善：主要按鈕大、一頁一個重點 */
+  .btn-big { display: block; width: 100%; margin-top: 0.833rem; padding: 0.917rem; font-size: 1.333rem; font-weight: bold; background: #4a90d9; min-height: 3.2rem; }
+  .btn-green { background: #27ae60; }
+  .btn-orange { background: #e67e22; }
+  .btn-light { display: block; width: 100%; margin-top: 0.667rem; padding: 0.75rem; font-size: 1.125rem; background: #fff; color: #1565c0;
+    border: 2px solid #4a90d9; border-radius: 0.417rem; font-family: inherit; cursor: pointer; }
+  .link-btn { display: block; margin: 0.833rem auto 0; background: none; border: none; color: #1565c0; font-size: 1.05rem; text-decoration: underline;
+    font-family: inherit; cursor: pointer; padding: 0.333rem; }
+
+  .chat-log { margin-top: 0.167rem; margin-bottom: 0.5rem; }
+  .chat-bubble { padding: 0.5rem 0.667rem; border-radius: 0.583rem; margin-bottom: 0.417rem; font-size: 1rem; line-height: 1.4; max-width: 85%; white-space: pre-wrap; }
+  .chat-bubble.user { background: #4a90d9; color: #fff; margin-left: auto; border-bottom-right-radius: 0.167rem; }
+  .chat-bubble.model { background: #f0eefc; color: #5b2c8e; margin-right: auto; border-bottom-left-radius: 0.167rem; }
+  .chat-bubble.typing { display: flex; width: fit-content; align-items: center; gap: 0.25rem; }
+  .chat-bubble.typing .typing-label { font-size: 0.917rem; opacity: 0.8; margin-right: 0.167rem; }
+  .chat-bubble.typing .dot { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: #8e44ad; animation: typingDot 1.2s infinite ease-in-out; }
+  .chat-bubble.typing .dot:nth-child(3) { animation-delay: 0.2s; }
+  .chat-bubble.typing .dot:nth-child(4) { animation-delay: 0.4s; }
+  @keyframes typingDot { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-0.208rem); } }
+  .chat-input-row { display: flex; gap: 0.417rem; }
+  .chat-input-row input {
+    flex: 1; min-width: 0; padding: 0.583rem; border: 1px solid #ddd; border-radius: 0.417rem;
+    font-size: 1rem; font-family: inherit;
+  }
+  .btn-send { background: #8e44ad; color: #fff; padding: 0.583rem 0.833rem; border: none; border-radius: 0.417rem; font-size: 1rem; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn-send:disabled, .chat-input-row input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .summary-total { text-align: center; padding: 0.417rem 0 0.833rem; }
+  .summary-total .num { font-size: 2.333rem; font-weight: bold; color: #1e8449; }
+  .summary-total .label { font-size: 1rem; color: #888; }
+
+  .final-msg { font-size: 1.167rem; line-height: 1.6; text-align: center; }
+  .page-title { font-size: 1.5rem; font-weight: bold; text-align: center; color: #b9770e; margin-bottom: 0.75rem; }
+  .big-amount { font-size: 2.5rem; font-weight: bold; color: #1e8449; text-align: center; line-height: 1.3; }
+  .big-amount small { font-size: 1.2rem; }
+  .gift { font-size: 2rem; text-align: center; letter-spacing: 0.25rem; margin: 0.25rem 0 0.5rem; }
+  .sub-note { font-size: 1rem; color: #888; text-align: center; margin-bottom: 0.667rem; }
+  .deadline-box { background: #fff3e0; border: 2px solid #f39c12; border-radius: 0.417rem; padding: 0.75rem; text-align: center; font-size: 1.125rem; line-height: 1.6; color: #8a4b00; margin-top: 0.667rem; }
+  .deadline-box b { font-size: 1.25rem; color: #c0392b; }
+  .expiry-box { background: #eef7ee; border-radius: 0.417rem; padding: 0.583rem 0.75rem; margin-top: 0.75rem; text-align: center; font-size: 1rem; line-height: 1.6; color: #2e5e34; }
+  .expiry-box b { font-size: 1.083rem; }
+  .verify-box { background: #fff3e0; border: 2px solid #e67e22; border-radius: 0.417rem; padding: 0.75rem; margin-top: 0.833rem; text-align: center; font-size: 1.083rem; line-height: 1.6; color: #8a4b00; }
+  .verify-box .vb-title { font-size: 1.25rem; font-weight: bold; }
+  .portal-btn {
+    display: flex; align-items: center; justify-content: center; min-height: 3rem; margin-top: 0.583rem; padding: 0.583rem 0.75rem; border-radius: 0.417rem;
+    background: #0084ff; color: #fff; font-size: 1.25rem; font-weight: bold; text-decoration: none;
+  }
+
+  #screen-quiz, #screen-summary, #screen-result, #screen-account, #screen-credits, #screen-msg { display: none; }
+
+  .intro-text { font-size: 1.5rem; line-height: 1.6; text-align: center; margin-bottom: 0.5rem; }
+  .intro-rule { font-size: 1.083rem; line-height: 1.6; text-align: center; color: #666; }
+  .intro-about { margin-top: 0.833rem; font-size: 1rem; color: #555; }
+  .intro-about summary { cursor: pointer; text-align: center; color: #1565c0; }
+  .intro-about ul { margin: 0.5rem 0 0; padding-left: 1.25rem; line-height: 1.7; }
+  .intro-footer { margin-top: 0.833rem; text-align: center; font-size: 0.917rem; color: #888; }
+  .intro-footer a { color: #1565c0; margin-left: 0.5rem; }
+
+  /* ===== 輸入手機／密碼（每頁只問一件事） ===== */
+  .ask { font-size: 1.417rem; font-weight: bold; text-align: center; margin-bottom: 0.333rem; line-height: 1.5; }
+  .ask-hint { font-size: 1rem; color: #777; text-align: center; margin-bottom: 0.833rem; line-height: 1.5; }
+  .field-row { position: relative; }
+  .big-input { width: 100%; padding: 0.75rem 0.833rem; font-size: 1.5rem; letter-spacing: 0.08rem; border: 2px solid #bbb; border-radius: 0.417rem;
+    font-family: inherit; text-align: center; background: #fff; color: #222; }
+  .big-input:focus { outline: none; border-color: #4a90d9; }
+  .eye-btn { position: absolute; right: 0.333rem; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0.333rem; }
+  .input-tip { min-height: 1.6rem; font-size: 1.05rem; text-align: center; margin-top: 0.417rem; color: #888; }
+  .input-tip.ok { color: #1e8449; }
+  .input-tip.bad { color: #c0392b; font-weight: bold; }
+  .who-line { text-align: center; font-size: 1.05rem; color: #555; margin-bottom: 0.583rem; }
+
+  /* ===== 我的購物金 ===== */
+  .credit-total { text-align: center; padding: 0.25rem 0 0.583rem; }
+  .credit-total .label { font-size: 1.083rem; color: #666; }
+  .credit-total .num { font-size: 2.6rem; font-weight: bold; color: #1e8449; line-height: 1.3; }
+  .credit-pending { text-align: center; font-size: 1.125rem; color: #b9770e; font-weight: bold; }
+  .credit-list { margin-top: 0.833rem; border-top: 1px solid #eee; }
+  .credit-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.667rem 0.25rem; border-bottom: 1px solid #eee; font-size: 1.05rem; line-height: 1.45; }
+  .credit-item .ci-left { flex: 1; }
+  .credit-item .ci-amt { font-size: 1.25rem; font-weight: bold; white-space: nowrap; }
+  .ci-sub { font-size: 0.95rem; color: #777; }
+  .st { display: inline-block; font-size: 0.9rem; padding: 0.083rem 0.417rem; border-radius: 0.25rem; margin-left: 0.25rem; }
+  .st-available { background: #d4efdf; color: #1e8449; }
+  .st-soon { background: #fde8e8; color: #c0392b; font-weight: bold; }
+  .st-pending { background: #fff3e0; color: #b9770e; }
+  .st-used, .st-expired { background: #eee; color: #888; }
+  .credit-item.dim { color: #999; }
+  .credit-item.pending-row { background: #fffaf0; }
+  .credit-howto { margin-top: 0.833rem; text-align: center; font-size: 1.05rem; color: #555; line-height: 1.6; }
+
+  /* ===== 遊戲橫幅（來自 橫幅.html） ===== */
+  .game-banner-card {
+    position: relative; width: 100%; height: 4rem; border-radius: 0.667rem; overflow: hidden;
+    background: linear-gradient(180deg, #7ad5fb 0%, #b8ebff 65%, #62c370 65%, #48a655 100%);
+    box-shadow: 0 0.167rem 0.583rem rgba(0, 80, 160, 0.12); border: 2px solid #ffffff;
+    margin-bottom: 0.833rem; user-select: none;
+  }
+  .music-btn {
+    position: absolute; top: 0.333rem; right: 0.333rem; z-index: 10; width: 2.2rem; height: 2.2rem;
+    border-radius: 50%; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 0.208rem rgba(0, 0, 0, 0.15); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 0.625rem; padding: 0; outline: none;
+  }
+  .sky-clouds {
+    position: absolute; top: 0.333rem; left: 0; width: 200%; height: 1.5rem;
+    background-image: radial-gradient(circle 0.5rem at 0.833rem 0.75rem, #ffffff 100%, transparent 0),
+                      radial-gradient(circle 0.667rem at 1.5rem 0.583rem, #ffffff 100%, transparent 0),
+                      radial-gradient(circle 0.5rem at 2.167rem 0.75rem, #ffffff 100%, transparent 0),
+                      radial-gradient(circle 0.417rem at 5.833rem 0.667rem, #ffffff 100%, transparent 0);
+    background-size: 8.333rem 1.5rem; background-repeat: repeat-x; opacity: 0.85;
+    animation: cloudDrift 20s linear infinite;
+  }
+  .ground-track {
+    position: absolute; bottom: 0; left: 0; width: 200%; height: 1.333rem;
+    background-image: repeating-linear-gradient(90deg, transparent, transparent 1.458rem,
+      rgba(255, 255, 255, 0.25) 1.458rem, rgba(255, 255, 255, 0.25) 1.875rem);
+    animation: groundRun 2.5s linear infinite;
+  }
+  .banner-character-box {
+    position: absolute; bottom: 0.417rem; left: 15%; width: 2rem; height: 2rem;
+    transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 2;
+  }
+  .banner-character {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.417rem; animation: charWaddle 0.5s ease-in-out infinite alternate; transform-origin: bottom center;
+  }
+  @keyframes charWaddle { 0% { transform: translateY(0) rotate(-4deg); } 100% { transform: translateY(-0.208rem) rotate(4deg); } }
+  @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  @keyframes groundRun { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .char-jump { animation: victoryJump 0.4s ease-in-out 3 !important; }
+  @keyframes victoryJump { 0% { transform: scale(1) translateY(0); } 50% { transform: scale(1.2) translateY(-1.583rem); } 100% { transform: scale(1) translateY(0); } }
+  .char-shake { animation: hurtShake 0.4s ease-in-out 3 !important; }
+  @keyframes hurtShake { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(-0.333rem) rotate(-14deg); } 75% { transform: translateX(0.333rem) rotate(14deg); } }
+</style>
+<script>
+  // 保險（同 V1）：瀏覽器若用桌機寬度排版（Chrome「電腦版網站」、部分 App 內建瀏覽器），按比例放大 html 字級。不可刪
+  (function () {
+    try {
+      const landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+      const device = landscape ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      const ratio = window.innerWidth / device;
+      if (device < 700 && ratio > 1.3) {
+        document.documentElement.style.fontSize = (17 * ratio) + 'px';
+      }
+    } catch (e) { /* 判斷失敗就維持 17px */ }
+  })();
+</script>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand-row">
+    <span class="brand-tag">有獎問答</span>
+    <span class="brand-name">天生一對</span>
+  </div>
+  <p id="header-deadline" style="display:none;">本期截止 <span class="deadline-text"></span></p>
+</div>
+
+<div class="member-bar" id="member-bar"></div>
+
+<div class="game-banner-card" id="gameBanner">
+  <button class="music-btn" id="musicBtn" onclick="toggleAudio()" title="開關聲音">🔈</button>
+  <div class="sky-clouds"></div>
+  <div class="ground-track"></div>
+  <div class="banner-character-box" id="charBox">
+    <div class="banner-character" id="charSprite">🦁</div>
+  </div>
+</div>
+
+<div class="notice" id="notice"></div>
+
+<div id="screen-loading" class="card"><div class="final-msg">載入中…</div></div>
+
+<div id="screen-intro" class="card" style="display:none;">
+  <div class="intro-text" id="intro-text">準備好了嗎？答對拿購物金！</div>
+  <div class="intro-rule" id="intro-rule"></div>
+  <button class="btn btn-big" id="intro-btn" onclick="beginQuiz()">開始問答</button>
+  <div id="intro-member-btns"></div>
+  <details class="intro-about">
+    <summary>📋 活動說明</summary>
+    <ul>
+      <li>共 3 題，每題限時作答，答對越多購物金越多</li>
+      <li>玩完輸入手機，購物金就自動存入</li>
+      <li>購物金可到門市消費或網購出貨時抵扣</li>
+      <li>每期每人限存入一次</li>
+    </ul>
+  </details>
+  <div class="intro-footer">天生一對 鞋.童裝<span id="fb-link"></span></div>
+</div>
+
+<div id="screen-quiz" class="card">
+  <div class="quiz-deadline">本期截止 <span class="deadline-text"></span></div>
+  <div class="progress"><span id="progress"></span><span class="diff-mark" id="diff-mark"></span></div>
+  <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+  <div class="question-text" id="question-text"></div>
+  <div id="options"></div>
+  <div id="feedback-area"></div>
+</div>
+
+<div id="screen-summary" class="card">
+  <div class="summary-total">
+    <div class="num" id="summary-num">0</div>
+    <div class="label">本輪購物金（元）</div>
+  </div>
+  <div id="summary-body"></div>
+</div>
+
+<div id="screen-result" class="card"></div>
+<div id="screen-account" class="card"></div>
+<div id="screen-credits" class="card"></div>
+<div id="screen-msg" class="card"></div>
+
+<script>
+  // ===== 會員版有獎問答前端（V2，GitHub Pages quiz2）=====
+  // 後端：會員版問答模組 GAS 的 doPost（問答模組/入口_API.js）。⚠️ 不是 V1 的網址
+  const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxQy8P534zS16N-aKqoNxp98Fz_abGRc3P4ie6XihaKbs9kx88lVN4e2xAX1O-KTRAk/exec';
+  // 維護測試碼（網址 ?test=）：系統維護中帶正確測試碼才放行；每次呼叫 API 都帶上
+  const TEST_CODE = new URLSearchParams(location.search).get('test') || '';
+
+  // localStorage（key 都和 V1 不同；quiz2 網址本來就是另一個網站，不會互相影響）
+  const STORE_KEY = 'memberQuizRound';     // 本輪作答狀態（同 V1 的接續機制）
+  const AUTH_KEY = 'memberQuizAuth';       // 登入狀態 {token, name, phone}（name、phone 已遮罩）
+  const PENDING_KEY = 'memberQuizPending'; // 還沒存入的成績 {resultCode, amount, deadlineMs, deadlineText}
+
+  let ACTIVITY = '';
+  let STATUS = '';  // open／closed（已截止）／full（已額滿）
+  let CONFIG = {};
+  let FRESH_QUESTIONS = [];
+  let DEPOSITED_THIS_PERIOD = false;
+  let MESSENGER = '';
+  let SECONDS = 15;
+  let PRIZE = 10;
+  let AUTH = null;
+
+  // 呼叫 GAS API：Content-Type 用 text/plain，避開 CORS 預檢；回傳 data，失敗丟錯
+  async function callGasApi(action, payload, timeoutMs) {
+    const ctrl = timeoutMs && window.AbortController ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, timeoutMs) : null;
+    try {
+      const body = Object.assign({ testCode: TEST_CODE }, payload || {});
+      const res = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, payload: body }),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      return json.data;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+  const CHAT_TIMEOUT_MS = 20000; // 閒聊等超過 20 秒就顯示「小助手有點忙」
+
+  function escapeHtml(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // localStorage 在部分瀏覽器（無痕、內建瀏覽器）可能不能用，讀寫失敗就當作沒有
+  function lsGet(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
+  function lsSet(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* 存不了就算了 */ } }
+  function lsDel(key) { try { localStorage.removeItem(key); } catch (e) { /* 忽略 */ } }
+
+  // ===== 本輪狀態 =====
+  // { activity, questions:[...], results:[null|{chosen,correct,timeout}], shown, shownAt, result }
+  // result：送出後的結果 {amount, correctCount, resultCode, deadlineMs, deadlineText, deposited, verified, claimDeadline, depositMsg}
+  let state = null;
+  let qIndex = 0;
+  function saveState() { lsSet(STORE_KEY, state); }
+
+  function firstUnanswered() {
+    for (let i = 0; i < state.questions.length; i++) {
+      if (!state.results[i]) return i;
+    }
+    return -1;
+  }
+  function totalReward() {
+    return state.results.reduce(function (sum, r) { return sum + (r && r.correct ? PRIZE : 0); }, 0);
+  }
+
+  // ===== 登入狀態 =====
+  function saveAuth(token, member) {
+    AUTH = { token: token, name: member.name, phone: member.phone };
+    lsSet(AUTH_KEY, AUTH);
+  }
+  function clearAuth() { AUTH = null; lsDel(AUTH_KEY); }
+  function token() { return AUTH ? AUTH.token : ''; }
+
+  function renderMemberBar() {
+    const bar = document.getElementById('member-bar');
+    if (!AUTH) { bar.style.display = 'none'; return; }
+    bar.innerHTML = '目前登入：<b>' + escapeHtml(AUTH.name) + '</b>（' + escapeHtml(AUTH.phone) + '）<br>' +
+      '不是你？<button onclick="switchAccount()">切換帳號</button>';
+    bar.style.display = 'block';
+  }
+  function switchAccount() {
+    clearAuth();
+    location.reload();
+  }
+
+  // ===== 未存入的成績 =====
+  function loadPending() { return lsGet(PENDING_KEY); }
+  function savePending(p) { lsSet(PENDING_KEY, p); }
+  function clearPending() { lsDel(PENDING_KEY); }
+  function hoursLeftText(ms) {
+    const mins = Math.max(0, Math.floor((ms - Date.now()) / 60000));
+    if (mins >= 60) return Math.floor(mins / 60) + ' 小時';
+    return Math.max(1, mins) + ' 分鐘';
+  }
+
+  // 首頁最上方的提醒：還有成績沒存入（橘色＋馬上存入）／超過期限（灰色，顯示一次後清掉）
+  function renderNotice(extraMsg) {
+    const el = document.getElementById('notice');
+    const p = loadPending();
+    let html = '';
+    let cls = '';
+    if (p && p.resultCode) {
+      if (Date.now() > p.deadlineMs) {
+        html = '這次 ' + escapeHtml(p.amount) + ' 元購物金的成績已超過期限，沒有存入';
+        cls = 'notice-gray';
+        clearPending();
+      } else {
+        html = '🎁 你還有 <b>' + escapeHtml(p.amount) + ' 元</b>購物金沒存入<br>剩 <b>' + hoursLeftText(p.deadlineMs) + '</b>（' +
+          escapeHtml(p.deadlineText) + ' 前）' +
+          '<button class="btn btn-big btn-orange" onclick="depositPending()">馬上存入</button>';
+        cls = 'notice-warn';
+      }
+    } else if (extraMsg) {
+      html = escapeHtml(extraMsg);
+      cls = 'notice-info';
+    }
+    el.className = 'notice ' + cls;
+    el.innerHTML = html;
+    el.style.display = html ? 'block' : 'none';
+  }
+
+  // 提醒上的［馬上存入］：已登入直接認領；沒登入就進輸入手機
+  function depositPending() {
+    const p = loadPending();
+    if (!p) { renderNotice(); return; }
+    if (AUTH) claimNow(p.resultCode);
+    else startAccount('claim', p.resultCode);
+  }
+
+  // ===== 遊戲橫幅：音效/音樂（來自 橫幅.html，同 V1） =====
+  let audioCtx = null;
+  let bgmInterval = null;
+  let isSoundActive = false;
+  let mutedByUser = false;
+
+  function initAudioContext() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function playNote(freq, type, duration, startTime) {
+    if (!audioCtx) return;
+    startTime = startTime || 0;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime + startTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + startTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + startTime);
+    osc.stop(audioCtx.currentTime + startTime + duration);
+  }
+  const melodyNotes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+  let noteIndex = 0;
+  function startBGM() {
+    if (bgmInterval) clearInterval(bgmInterval);
+    bgmInterval = setInterval(function () {
+      playNote(melodyNotes[noteIndex], 'triangle', 0.22);
+      noteIndex = (noteIndex + 1) % melodyNotes.length;
+    }, 280);
+    isSoundActive = true;
+    document.getElementById('musicBtn').innerText = '🎵';
+  }
+  function stopBGM() {
+    if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+    isSoundActive = false;
+    document.getElementById('musicBtn').innerText = '🔇';
+  }
+  function toggleAudio() {
+    initAudioContext();
+    if (isSoundActive) { stopBGM(); mutedByUser = true; }
+    else { startBGM(); mutedByUser = false; }
+  }
+  function unlockAudio() {
+    initAudioContext();
+    if (!isSoundActive && !mutedByUser) startBGM();
+  }
+  function playEffectSound(type) {
+    initAudioContext();
+    if (type === 'correct') {
+      playNote(523.25, 'sine', 0.15, 0);
+      playNote(659.25, 'sine', 0.15, 0.12);
+      playNote(783.99, 'sine', 0.35, 0.24);
+    } else {
+      playNote(220.00, 'sawtooth', 0.18, 0);
+      playNote(196.00, 'sawtooth', 0.30, 0.15);
+    }
+  }
+  function playEndingChime() {
+    if (!audioCtx) return;
+    playNote(523.25, 'sine', 0.2, 0);
+    playNote(659.25, 'sine', 0.2, 0.15);
+    playNote(783.99, 'sine', 0.2, 0.3);
+    playNote(1046.50, 'sine', 0.6, 0.45);
+  }
+  function setBannerProgress(stepIndex) {
+    const box = document.getElementById('charBox');
+    const positions = { 1: '15%', 2: '45%', 3: '75%' };
+    box.style.left = positions[stepIndex] || '15%';
+  }
+  function triggerFeedback(type) {
+    const sprite = document.getElementById('charSprite');
+    sprite.classList.remove('char-jump', 'char-shake');
+    void sprite.offsetWidth;
+    playEffectSound(type);
+    sprite.classList.add(type === 'correct' ? 'char-jump' : 'char-shake');
+    setTimeout(function () { sprite.classList.remove('char-jump', 'char-shake'); }, 1300);
+  }
+
+  // ===== 畫面切換 =====
+  const SCREENS = ['screen-loading', 'screen-intro', 'screen-quiz', 'screen-summary', 'screen-result', 'screen-account', 'screen-credits', 'screen-msg'];
+  function showScreen(id) {
+    SCREENS.forEach(function (s) { document.getElementById(s).style.display = s === id ? 'block' : 'none'; });
+    window.scrollTo(0, 0);
+  }
+  // 作答以外的頁面：標題列顯示、橫幅收起、音樂停掉、提醒收起（首頁才顯示）
+  function showPage(id) {
+    clearTimeout(questionTimer);
+    document.querySelector('.header').style.display = 'block';
+    document.getElementById('gameBanner').style.display = 'none';
+    document.getElementById('notice').style.display = 'none';
+    stopBGM();
+    showScreen(id);
+  }
+
+  // 會員相關按鈕（首頁、訊息頁共用）
+  function memberButtonsHtml() {
+    if (AUTH) return '<button class="btn-light" onclick="showCredits()">🎁 我的購物金</button>';
+    return '<button class="btn-light" onclick="startAccount(\'login\')">會員登入／查我的購物金</button>';
+  }
+
+  function showMessage(title, msg, withMemberBtns) {
+    const el = document.getElementById('screen-msg');
+    el.innerHTML = '<div class="page-title">' + escapeHtml(title) + '</div><div class="final-msg">' + msg + '</div>' +
+      (withMemberBtns ? memberButtonsHtml() : '');
+    showScreen('screen-msg');
+  }
+
+  function goHome() {
+    location.reload();
+  }
+
+  // ===== 進入：決定是新的一輪、接續、還是看結果 =====
+  function init() {
+    const saved = lsGet(STORE_KEY);
+    const hasSaved = saved && saved.activity === ACTIVITY && Array.isArray(saved.questions) && saved.questions.length;
+
+    // 已登入且本期已存入：不再玩
+    if (DEPOSITED_THIS_PERIOD) {
+      showMessage('🎁 本期已經參加過囉', '購物金已經存入<br>下期再來挑戰！', true);
+      return;
+    }
+
+    // 已截止／已額滿：本期玩過的人看自己的結果，其他人直接告知
+    if (STATUS !== 'open') {
+      if (hasSaved && saved.result) {
+        state = saved;
+        showResult(true);
+      } else if (STATUS === 'full') {
+        showMessage('🈵 本期名額已額滿', '謝謝你的參與！請留意粉絲專頁的下一期活動。', true);
+      } else {
+        showMessage('⌛ 本期活動已截止', '謝謝你的支持！請留意粉絲專頁的下一期活動。', true);
+      }
+      return;
+    }
+
+    // 同期限制：本期已玩完就只看結果（包含成績過期沒存入的，也不能再玩）
+    const finishedAndCanReplay = hasSaved && saved.result && !CONFIG.samePeriodLimit;
+    if (hasSaved && saved.result && !finishedAndCanReplay) {
+      state = saved;
+      showResult(true);
+      return;
+    }
+
+    if (hasSaved && !finishedAndCanReplay) {
+      state = saved;
+    } else {
+      state = {
+        activity: ACTIVITY,
+        questions: FRESH_QUESTIONS,
+        results: FRESH_QUESTIONS.map(function () { return null; }),
+        shown: -1,
+        result: null
+      };
+    }
+
+    // 作答中途重新整理：回到同一題，倒數剩下的秒數；時間已過就算超時（同 V1，防刷新逃題）
+    let escapedIndex = -1;
+    let resumeMidQuestion = false;
+    if (state.shown >= 0 && !state.results[state.shown]) {
+      const elapsed = state.shownAt ? Date.now() - state.shownAt : Infinity;
+      if (elapsed < SECONDS * 1000) {
+        resumeMidQuestion = true;
+      } else {
+        state.results[state.shown] = { chosen: '', correct: false, timeout: true };
+        escapedIndex = state.shown;
+        state.shown = -1;
+      }
+    } else {
+      state.shown = -1;
+    }
+    saveState();
+
+    if (!state.questions.length) {
+      showMessage('😥 題目載入失敗', '請稍後重新整理頁面再試一次。');
+      return;
+    }
+
+    qIndex = firstUnanswered();
+    if (qIndex === -1) {
+      // 三題都答完了但還沒送出成功（例如上次送出時斷線），直接重新送出
+      showSummary();
+      return;
+    }
+
+    if (resumeMidQuestion) {
+      showQuizScreen();
+      renderQuestion();
+      const left = Math.ceil((SECONDS * 1000 - (Date.now() - state.shownAt)) / 1000);
+      document.getElementById('feedback-area').innerHTML =
+        '<div class="feedback feedback-timeout">⚡ 接續作答，本題剩 ' + left + ' 秒</div>';
+      return;
+    }
+
+    document.getElementById('intro-rule').textContent =
+      '共 ' + state.questions.length + ' 題，每題 ' + SECONDS + ' 秒，答對一題 ' + PRIZE + ' 元購物金';
+    if (qIndex > 0) {
+      document.getElementById('intro-text').textContent = '接續作答：第 ' + (qIndex + 1) + ' 題／共 ' + state.questions.length + ' 題';
+      document.getElementById('intro-rule').textContent =
+        (escapedIndex >= 0 ? '第 ' + (escapedIndex + 1) + ' 題作答中離開，以超時計算。' : '') +
+        '目前累計 ' + totalReward() + ' 元購物金';
+      document.getElementById('intro-btn').textContent = '繼續作答';
+      setBannerProgress(qIndex + 1);
+    }
+    document.getElementById('intro-member-btns').innerHTML = memberButtonsHtml();
+    showScreen('screen-intro');
+  }
+
+  function beginQuiz() {
+    unlockAudio();
+    showQuizScreen();
+    renderQuestion();
+  }
+
+  // 作答畫面隱藏標題列、登入列與提醒，讓題目＋4 個選項不用捲動（同 V1）
+  function showQuizScreen() {
+    document.querySelector('.header').style.display = 'none';
+    document.getElementById('member-bar').style.display = 'none';
+    document.getElementById('notice').style.display = 'none';
+    showScreen('screen-quiz');
+  }
+
+  function diffMark(difficulty) {
+    if (difficulty === 'easy') return 'H';
+    if (difficulty === 'hard') return 'L';
+    return 'M';
+  }
+
+  let questionTimer = null;
+  let chatHistory = [];
+  let chatRound = 0;
+  let currentQuestionText = '';
+  let currentFeedbackText = '';
+
+  function renderQuestion() {
+    const q = state.questions[qIndex];
+    if (state.shown !== qIndex || !state.shownAt) {
+      state.shown = qIndex;
+      state.shownAt = Date.now();
+      saveState();
+    }
+    const elapsed = Date.now() - state.shownAt;
+    const remaining = Math.max(0, SECONDS * 1000 - elapsed);
+
+    document.getElementById('progress').textContent = '第 ' + (qIndex + 1) + ' 題／共 ' + state.questions.length + ' 題';
+    document.getElementById('diff-mark').textContent = diffMark(q.difficulty);
+    setBannerProgress(qIndex + 1);
+    document.getElementById('question-text').textContent = q.question;
+    document.getElementById('feedback-area').innerHTML = '';
+
+    document.getElementById('options').innerHTML = q.options.map(function (opt, i) {
+      return '<button class="option-btn" data-idx="' + i + '" onclick="handleAnswer(' + i + ')">' + escapeHtml(opt) + '</button>';
+    }).join('');
+
+    const timerFill = document.getElementById('timer-fill');
+    timerFill.style.animation = 'none';
+    timerFill.style.animationPlayState = '';
+    void timerFill.offsetWidth;
+    timerFill.style.animation = '';
+    timerFill.style.animationDuration = SECONDS + 's';
+    timerFill.style.animationDelay = -(elapsed / 1000) + 's';
+
+    clearTimeout(questionTimer);
+    questionTimer = setTimeout(handleTimeout, remaining);
+  }
+
+  function optionLetter(opt) {
+    const m = String(opt).match(/^([A-Za-z])[.、]/);
+    return m ? m[1].toUpperCase() : null;
+  }
+
+  function markCorrectOption(q) {
+    document.querySelectorAll('.option-btn').forEach(function (b) {
+      b.disabled = true;
+      const letter = optionLetter(q.options[Number(b.dataset.idx)]);
+      if (letter === String(q.answer).trim().toUpperCase()) b.classList.add('correct');
+    });
+  }
+
+  function handleAnswer(idx) {
+    clearTimeout(questionTimer);
+    document.getElementById('timer-fill').style.animationPlayState = 'paused';
+
+    const q = state.questions[qIndex];
+    const chosenLetter = optionLetter(q.options[idx]);
+    const correct = chosenLetter === String(q.answer).trim().toUpperCase();
+
+    markCorrectOption(q);
+    if (!correct) {
+      const chosenBtn = document.querySelector('.option-btn[data-idx="' + idx + '"]');
+      if (chosenBtn) chosenBtn.classList.add('wrong');
+    }
+
+    state.results[qIndex] = { chosen: chosenLetter || '', correct: correct, timeout: false };
+    state.shown = -1;
+    state.shownAt = null;
+    saveState();
+
+    currentQuestionText = q.question;
+    currentFeedbackText = correct ? ('✅ 答對了！+' + PRIZE + ' 元購物金') : ('❌ 答錯了，正解是 ' + q.answer);
+    chatHistory = [];
+    chatRound = 0;
+    triggerFeedback(correct ? 'correct' : 'wrong');
+
+    document.getElementById('feedback-area').innerHTML =
+      '<div class="feedback ' + (correct ? 'feedback-ok' : 'feedback-bad') + '">' + escapeHtml(currentFeedbackText) + '</div>';
+
+    setTimeout(function () { showChatPrompt(q.seed); }, 600);
+  }
+
+  function handleTimeout() {
+    const q = state.questions[qIndex];
+    markCorrectOption(q);
+    state.results[qIndex] = { chosen: '', correct: false, timeout: true };
+    state.shown = -1;
+    state.shownAt = null;
+    saveState();
+    triggerFeedback('wrong');
+    document.getElementById('feedback-area').innerHTML =
+      '<div class="feedback feedback-timeout">⏰ 時間到！正解是 ' + escapeHtml(q.answer) + '</div>';
+    setTimeout(nextStep, 1500);
+  }
+
+  // ===== 閒聊（同 V1） =====
+  function showChatPrompt(seed) {
+    const box = document.createElement('div');
+    box.id = 'chat-box';
+    box.dataset.seed = seed || '這個話題';
+    box.innerHTML = '<div class="chat-prompt">要聊聊「' + escapeHtml(seed || '這個話題') + '」嗎？</div>' +
+      '<div class="chat-actions">' +
+        '<button class="btn btn-skip" onclick="nextStep()">跳過</button>' +
+        '<button class="btn btn-chat" onclick="startChat()">聊聊</button>' +
+      '</div>';
+    document.getElementById('feedback-area').appendChild(box);
+  }
+
+  function startChat() {
+    document.getElementById('gameBanner').style.display = 'none';
+    stopBGM();
+    const box = document.getElementById('chat-box');
+    box.innerHTML =
+      '<div class="chat-log" id="chat-log"></div>' +
+      '<div class="chat-input-row" id="chat-input-row">' +
+        '<input type="text" id="chat-input" placeholder="輸入訊息…" onkeydown="if(event.key===\'Enter\')sendChatMessage()">' +
+        '<button class="btn-send" id="chat-send-btn" onclick="sendChatMessage()">送出</button>' +
+      '</div>' +
+      '<button class="btn btn-next" id="chat-next-btn" onclick="nextStep()">' +
+        (firstUnanswered() === -1 ? '看結果' : '下一題') + '</button>';
+  }
+
+  function appendChatBubble(role, text) {
+    const log = document.getElementById('chat-log');
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'model');
+    bubble.textContent = text;
+    log.appendChild(bubble);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function showTyping() {
+    const log = document.getElementById('chat-log');
+    const bubble = document.createElement('div');
+    bubble.id = 'chat-typing';
+    bubble.className = 'chat-bubble model typing';
+    bubble.innerHTML = '<span class="typing-label">小助手思考中</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    log.appendChild(bubble);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function hideTyping() {
+    const el = document.getElementById('chat-typing');
+    if (el) el.remove();
+  }
+
+  function cleanReply(text) {
+    return String(text).replace(/^\s*#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/\*/g, '').trim();
+  }
+
+  function endChat(msg) {
+    appendChatBubble('model', msg);
+    const row = document.getElementById('chat-input-row');
+    if (row) row.remove();
+  }
+
+  function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const seed = document.getElementById('chat-box').dataset.seed;
+    input.value = '';
+    input.disabled = true;
+    document.getElementById('chat-send-btn').disabled = true;
+    appendChatBubble('user', message);
+    showTyping();
+
+    callGasApi('chatReply', {
+      seed: seed, questionText: currentQuestionText, feedbackText: currentFeedbackText,
+      history: chatHistory, userMessage: message
+    }, CHAT_TIMEOUT_MS).then(function (res) {
+      if (!document.getElementById('chat-log')) return;
+      hideTyping();
+      if (!res || !res.ok) {
+        endChat('小助手有點忙，先跳過聊天，繼續答題拿購物金吧！');
+        return;
+      }
+      const reply = cleanReply(res.reply);
+      appendChatBubble('model', reply);
+      chatHistory.push({ role: 'user', text: message });
+      chatHistory.push({ role: 'model', text: reply });
+      chatRound++;
+      if (chatRound >= 3) {
+        endChat('謝謝您跟我聊天，下次再聊！請點下方按鈕繼續');
+      } else {
+        input.disabled = false;
+        document.getElementById('chat-send-btn').disabled = false;
+        input.focus();
+      }
+    }).catch(function () {
+      if (!document.getElementById('chat-log')) return;
+      hideTyping();
+      endChat('小助手有點忙，先跳過聊天，繼續答題拿購物金吧！');
+    });
+  }
+
+  function nextStep() {
+    document.getElementById('gameBanner').style.display = 'block';
+    if (!mutedByUser && !isSoundActive) startBGM();
+    qIndex = firstUnanswered();
+    if (qIndex === -1) showSummary();
+    else renderQuestion();
+  }
+
+  // ===== 三題答完：送後端判分（已登入就當下存入） =====
+  function showSummary() {
+    clearTimeout(questionTimer);
+    stopBGM();
+    showScreen('screen-summary');
+    document.getElementById('summary-num').textContent = totalReward();
+    submitResult();
+  }
+
+  function submitResult() {
+    const body = document.getElementById('summary-body');
+    body.innerHTML = '<div class="final-msg">正在計算購物金…</div>';
+
+    const answers = state.questions.map(function (q, i) {
+      const r = state.results[i] || {};
+      return { question: q.question, chosen: r.chosen || '', answer: q.answer, category: q.category || '', difficulty: q.difficulty || '' };
+    });
+
+    callGasApi('submitAnswers', { activityCode: ACTIVITY, answers: answers, token: token() }).then(function (res) {
+      if (res && res.loggedOut) { clearAuth(); renderMemberBar(); }
+      if (res && res.ok) {
+        const dep = res.deposit;
+        state.result = {
+          amount: res.amount,
+          correctCount: res.correctCount,
+          resultCode: res.resultCode || '',
+          deadlineMs: res.loginDeadlineMs || 0,
+          deadlineText: res.loginDeadlineText || '',
+          deposited: !!(dep && dep.ok),
+          verified: dep && dep.ok ? dep.verified : false,
+          claimDeadline: dep && dep.ok ? dep.claimDeadline : '',
+          // 已登入但不能存入、且再試也沒用（本期已存入、額滿）
+          depositMsg: dep && !dep.ok && (dep.reason === 'already' || dep.reason === 'full') ? dep.msg : ''
+        };
+        saveState();
+        // 有成績、還沒存入、還能存入 → 記下來，首頁會提醒
+        if (state.result.resultCode && !state.result.deposited && !state.result.depositMsg) {
+          savePending({ resultCode: state.result.resultCode, amount: state.result.amount,
+            deadlineMs: state.result.deadlineMs, deadlineText: state.result.deadlineText });
+        }
+        playEndingChime();
+        showResult(false);
+        return;
+      }
+      const msg = (res && res.msg) || '發生錯誤，請稍後再試';
+      const canRetry = res && (res.reason === 'busy' || res.reason === 'maintenance');
+      body.innerHTML = '<div class="final-msg">' + escapeHtml(msg) + '</div>' +
+        (canRetry ? '<button class="btn btn-big" onclick="submitResult()">再送一次</button>' : '');
+    }).catch(function () {
+      body.innerHTML = '<div class="final-msg">網路好像不太穩，成績還沒送出</div>' +
+        '<button class="btn btn-big" onclick="submitResult()">再送一次</button>';
+    });
+  }
+
+  // 「通知FB客服驗證」框：新註冊、還沒驗證的人都會看到（阿嬤不用打字，傳貼圖就好）
+  function verifyBoxHtml() {
+    return '<div class="verify-box"><div class="vb-title">📩 最後一步：通知客服驗證</div>' +
+      '打開後，<b>傳任意一個貼圖</b>就完成了<br>驗證後購物金就能使用' +
+      (MESSENGER ? '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">通知FB客服驗證</a>' : '') +
+      '</div>';
+  }
+
+  function expiryHtml(claimDeadline) {
+    const m = String(claimDeadline || '').match(/^\d{4}\/(\d{1,2})\/(\d{1,2})/);
+    if (!m) return '';
+    return '<div class="expiry-box"><b>🎁 購物金使用期限至 ' + Number(m[1]) + '/' + Number(m[2]) + '</b><br>' +
+      '不用馬上買，期限內來店消費或網購出貨都能抵扣</div>';
+  }
+
+  // 存入成功的畫面
+  function depositedHtml(amount, verified, claimDeadline) {
+    return '<div class="page-title">🎉 購物金已存入</div>' +
+      '<div class="big-amount">' + escapeHtml(amount) + ' <small>元</small></div>' +
+      '<div class="gift">🎁🛍️🎁</div>' +
+      expiryHtml(claimDeadline) +
+      (verified ? '' : verifyBoxHtml()) +
+      '<button class="btn-light" onclick="showCredits()">🎁 我的購物金</button>' +
+      '<button class="link-btn" onclick="goHome()">回首頁</button>';
+  }
+
+  // 玩完的結果畫面（isRevisit：再次進來看）
+  function showResult(isRevisit) {
+    const r = state.result || {};
+    setBannerProgress(3);
+    showPage('screen-result');
+    renderMemberBar();
+    const el = document.getElementById('screen-result');
+    const note = isRevisit ? '<div class="sub-note">' +
+      (STATUS === 'full' ? '本期名額已額滿，以下是你這期的結果' : STATUS === 'closed' ? '本期活動已截止，以下是你這期的結果' : '本期你已經玩過囉！') +
+      '</div>' : '';
+
+    if (!r.amount) {
+      el.innerHTML = note + '<div class="page-title">本輪答對 0 題</div>' +
+        '<div class="final-msg">這次沒有拿到購物金<br>請留意粉絲專頁，下期再來挑戰 💪</div>' + memberButtonsHtml();
+      return;
+    }
+    if (r.deposited) {
+      el.innerHTML = note + depositedHtml(r.amount, r.verified, r.claimDeadline);
+      return;
+    }
+    if (r.depositMsg) {
+      el.innerHTML = note + '<div class="page-title">本輪答對 ' + escapeHtml(r.correctCount) + ' 題</div>' +
+        '<div class="final-msg">' + escapeHtml(r.depositMsg) + '</div>' + memberButtonsHtml();
+      return;
+    }
+    const p = loadPending();
+    const stillPending = p && p.resultCode === r.resultCode && Date.now() <= p.deadlineMs;
+    if (!stillPending) {
+      el.innerHTML = note + '<div class="page-title">本輪 ' + escapeHtml(r.amount) + ' 元購物金</div>' +
+        '<div class="final-msg">這次的成績已超過期限，沒有存入</div>' + memberButtonsHtml();
+      return;
+    }
+    // 還沒存入：寫明期限（具體日期時間，不寫「24 小時」），大按鈕去輸入手機
+    el.innerHTML = note +
+      '<div class="page-title">🎉 恭喜答對 ' + escapeHtml(r.correctCount) + ' 題</div>' +
+      '<div class="big-amount">' + escapeHtml(r.amount) + ' <small>元購物金</small></div>' +
+      '<div class="deadline-box">請在 <b>' + escapeHtml(r.deadlineText) + ' 前</b><br>輸入手機存入，超過就不能存入囉</div>' +
+      (AUTH
+        ? '<button class="btn btn-big btn-green" onclick="claimNow(\'' + escapeHtml(r.resultCode) + '\')">馬上存入</button>'
+        : '<button class="btn btn-big btn-green" onclick="startAccount(\'claim\', \'' + escapeHtml(r.resultCode) + '\')">輸入手機存入</button>');
+  }
+
+  // 已登入：直接認領
+  function claimNow(resultCode) {
+    showPage('screen-msg');
+    document.getElementById('screen-msg').innerHTML = '<div class="final-msg">存入中…</div>';
+    callGasApi('claim', { token: token(), resultCode: resultCode }).then(function (res) {
+      if (res && res.reason === 'logged_out') {
+        clearAuth();
+        renderMemberBar();
+        startAccount('claim', resultCode);
+        return;
+      }
+      handleDeposit(res, resultCode);
+    }).catch(function () {
+      showMessage('網路好像不太穩', '還沒存入，請再按一次<button class="btn btn-big btn-green" onclick="claimNow(\'' +
+        escapeHtml(resultCode) + '\')">再試一次</button>');
+    });
+  }
+
+  // 存入的結果（登入、註冊、設定新密碼、馬上存入都走這裡）
+  function handleDeposit(dep, resultCode) {
+    if (dep && dep.ok) {
+      clearPending();
+      if (state && state.result && state.result.resultCode === resultCode) {
+        state.result.deposited = true;
+        state.result.verified = dep.verified;
+        state.result.claimDeadline = dep.claimDeadline;
+        saveState();
+      }
+      showPage('screen-result');
+      renderMemberBar();
+      document.getElementById('screen-result').innerHTML = depositedHtml(dep.amount, dep.verified, dep.claimDeadline);
+      return;
+    }
+    // 不能再存的（已存過、過期、找不到、本期已存入、額滿）就把提醒清掉；忙碌、維護保留，之後還能按
+    if (dep && ['claimed', 'expired', 'no_result', 'already', 'full'].indexOf(dep.reason) >= 0) {
+      clearPending();
+      if (state && state.result && state.result.resultCode === resultCode) {
+        state.result.depositMsg = dep.msg;
+        saveState();
+      }
+    }
+    showPage('screen-msg');
+    renderMemberBar();
+    document.getElementById('screen-msg').innerHTML =
+      '<div class="final-msg">' + escapeHtml((dep && dep.msg) || '發生錯誤，請稍後再試') + '</div>' +
+      memberButtonsHtml() + '<button class="link-btn" onclick="goHome()">回首頁</button>';
+  }
+
+  // ===== 輸入手機 → 登入／註冊（每頁只問一件事） =====
+  // purpose：claim（存入這筆成績）／login（只登入，之後看我的購物金）
+  let ACCT = { purpose: 'login', resultCode: '', phone: '', fbName: '', mode: '' };
+
+  function startAccount(purpose, resultCode) {
+    ACCT = { purpose: purpose, resultCode: resultCode || '', phone: '', fbName: '', mode: '' };
+    stepPhone();
+  }
+
+  function accountPage(html) {
+    showPage('screen-account');
+    renderMemberBar();
+    document.getElementById('screen-account').innerHTML = html;
+    const input = document.querySelector('#screen-account .big-input');
+    if (input) setTimeout(function () { input.focus(); }, 50);
+  }
+
+  function setTip(text, cls) {
+    const tip = document.getElementById('acct-tip');
+    if (!tip) return;
+    tip.textContent = text;
+    tip.className = 'input-tip' + (cls ? ' ' + cls : '');
+  }
+
+  function setBusy(busy) {
+    const b = document.getElementById('acct-btn');
+    if (b) b.disabled = busy;
+  }
+
+  // 第 1 頁：手機
+  function stepPhone() {
+    accountPage(
+      '<div class="ask">請輸入你的手機號碼</div>' +
+      '<div class="ask-hint">' + (ACCT.purpose === 'claim' ? '輸入後購物金就會存入' : '登入後可以查看我的購物金') + '</div>' +
+      '<input class="big-input" id="acct-phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" ' +
+        'placeholder="09xxxxxxxx" value="' + escapeHtml(ACCT.phone) + '" oninput="phoneTip()" onkeydown="if(event.key===\'Enter\')submitPhone()">' +
+      '<div class="input-tip" id="acct-tip"></div>' +
+      '<button class="btn btn-big" id="acct-btn" onclick="submitPhone()">下一步</button>' +
+      '<button class="link-btn" onclick="goHome()">回首頁</button>');
+    phoneTip();
+  }
+
+  function phoneTip() {
+    const el = document.getElementById('acct-phone');
+    const v = el.value.replace(/\D/g, '');
+    if (el.value !== v) el.value = v;
+    if (!v) return setTip('');
+    if (v.length >= 2 && v.slice(0, 2) !== '09') return setTip('手機要 09 開頭', 'bad');
+    if (v.length < 10) return setTip('還差 ' + (10 - v.length) + ' 碼');
+    setTip('✓ 格式正確', 'ok');
+  }
+
+  function submitPhone() {
+    const v = document.getElementById('acct-phone').value.replace(/\D/g, '');
+    if (!/^09\d{8}$/.test(v)) { setTip('請輸入 09 開頭的 10 碼手機號碼', 'bad'); return; }
+    ACCT.phone = v;
+    setBusy(true);
+    setTip('查詢中…');
+    callGasApi('checkPhone', { phone: v }).then(function (res) {
+      setBusy(false);
+      if (!res.ok) { setTip(res.msg, 'bad'); return; }
+      if (!res.exists) { ACCT.mode = 'register'; stepFbName(); }
+      else if (res.needSetPassword) { ACCT.mode = 'reset'; stepNewPassword(); }
+      else { ACCT.mode = 'login'; stepPassword(); }
+    }).catch(function () { setBusy(false); setTip('網路好像不太穩，請再按一次', 'bad'); });
+  }
+
+  function phoneLine() {
+    return '<div class="who-line">手機：' + escapeHtml(ACCT.phone) + '</div>';
+  }
+
+  // 密碼輸入框：數字鍵盤；show＝一開始就看得到（設定新密碼時）
+  function passwordInput(show, onEnter) {
+    return '<div class="field-row"><input class="big-input" id="acct-pw" type="' + (show ? 'text' : 'password') + '" inputmode="numeric" pattern="[0-9]*" ' +
+      'maxlength="12" autocomplete="' + (show ? 'new-password' : 'current-password') + '" oninput="pwDigitsOnly()" ' +
+      'onkeydown="if(event.key===\'Enter\')' + onEnter + '()">' +
+      '<button class="eye-btn" type="button" onclick="togglePw()" title="顯示／隱藏">' + (show ? '🙈' : '👁') + '</button></div>';
+  }
+  function pwDigitsOnly() {
+    const el = document.getElementById('acct-pw');
+    const v = el.value.replace(/\D/g, '');
+    if (el.value !== v) el.value = v;
+  }
+  function togglePw() {
+    const el = document.getElementById('acct-pw');
+    const showing = el.type === 'text';
+    el.type = showing ? 'password' : 'text';
+    document.querySelector('#screen-account .eye-btn').textContent = showing ? '👁' : '🙈';
+  }
+
+  // 已是會員：輸入密碼
+  function stepPassword() {
+    accountPage(phoneLine() +
+      '<div class="ask">請輸入密碼</div>' +
+      passwordInput(false, 'submitLogin') +
+      '<div class="input-tip" id="acct-tip"></div>' +
+      '<button class="btn btn-big" id="acct-btn" onclick="submitLogin()">登入</button>' +
+      '<button class="link-btn" onclick="showForgot()">忘記密碼？</button>' +
+      '<button class="link-btn" onclick="stepPhone()">← 改手機號碼</button>');
+  }
+
+  function submitLogin() {
+    const pw = document.getElementById('acct-pw').value;
+    if (!pw) { setTip('請輸入密碼', 'bad'); return; }
+    setBusy(true);
+    setTip('登入中…');
+    callGasApi('login', { phone: ACCT.phone, password: pw, resultCode: ACCT.resultCode }).then(function (res) {
+      setBusy(false);
+      if (!res.ok) {
+        if (res.reason === 'need_set_password') { ACCT.mode = 'reset'; stepNewPassword(); return; }
+        setTip(res.msg, 'bad');
+        if (res.reason === 'wrong_password') document.getElementById('acct-pw').value = '';
+        return;
+      }
+      afterAuth(res);
+    }).catch(function () { setBusy(false); setTip('網路好像不太穩，請再按一次', 'bad'); });
+  }
+
+  function showForgot() {
+    accountPage(phoneLine() +
+      '<div class="ask">忘記密碼了嗎？</div>' +
+      '<div class="final-msg">請私訊客服，客服幫你重設後<br>回到這裡輸入手機，就能設定新密碼</div>' +
+      (MESSENGER ? '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">私訊客服</a>' : '') +
+      '<button class="link-btn" onclick="stepPassword()">← 回上一步</button>');
+  }
+
+  // 不是會員：輸入 FB 名
+  function stepFbName() {
+    accountPage(phoneLine() +
+      '<div class="ask">歡迎加入！<br>請輸入你的 FB 名字</div>' +
+      '<div class="ask-hint">跟你 FB 上顯示的名字一樣，客服才找得到你</div>' +
+      '<input class="big-input" id="acct-name" type="text" maxlength="30" autocomplete="name" value="' + escapeHtml(ACCT.fbName) + '" ' +
+        'onkeydown="if(event.key===\'Enter\')submitFbName()">' +
+      '<div class="input-tip" id="acct-tip"></div>' +
+      '<button class="btn btn-big" id="acct-btn" onclick="submitFbName()">下一步</button>' +
+      '<button class="link-btn" onclick="stepPhone()">← 改手機號碼</button>');
+  }
+
+  function submitFbName() {
+    const v = document.getElementById('acct-name').value.trim();
+    if (!v) { setTip('請輸入你的 FB 名字', 'bad'); return; }
+    ACCT.fbName = v;
+    stepNewPassword();
+  }
+
+  // 設定密碼（註冊、或客服重設後）：一開始就看得到數字，不用輸入兩次
+  function stepNewPassword() {
+    const isReset = ACCT.mode === 'reset';
+    accountPage(phoneLine() +
+      '<div class="ask">' + (isReset ? '請設定新密碼' : '請設定密碼') + '</div>' +
+      '<div class="ask-hint">4～12 個數字，下次登入要用，請記住喔</div>' +
+      passwordInput(true, 'submitNewPassword') +
+      '<div class="input-tip" id="acct-tip"></div>' +
+      '<button class="btn btn-big btn-green" id="acct-btn" onclick="submitNewPassword()">' + (isReset ? '確定' : '註冊') + '</button>' +
+      '<button class="link-btn" onclick="' + (isReset ? 'stepPhone' : 'stepFbName') + '()">← 回上一步</button>');
+  }
+
+  function submitNewPassword() {
+    const pw = document.getElementById('acct-pw').value;
+    if (!/^\d{4,12}$/.test(pw)) { setTip('密碼請用 4～12 個數字', 'bad'); return; }
+    setBusy(true);
+    setTip(ACCT.mode === 'reset' ? '設定中…' : '註冊中…');
+    const p = ACCT.mode === 'reset'
+      ? callGasApi('setNewPassword', { phone: ACCT.phone, password: pw, resultCode: ACCT.resultCode })
+      : callGasApi('register', { phone: ACCT.phone, fbName: ACCT.fbName, password: pw, resultCode: ACCT.resultCode });
+    p.then(function (res) {
+      setBusy(false);
+      if (!res.ok) {
+        // 註冊途中別人搶先（極少）或已有密碼：改走登入
+        if (res.reason === 'exists' || res.reason === 'has_password') { ACCT.mode = 'login'; stepPassword(); setTip(res.msg, 'bad'); return; }
+        setTip(res.msg, 'bad');
+        return;
+      }
+      afterAuth(res);
+    }).catch(function () { setBusy(false); setTip('網路好像不太穩，請再按一次', 'bad'); });
+  }
+
+  // 登入／註冊／設定新密碼成功
+  function afterAuth(res) {
+    saveAuth(res.token, res.member);
+    renderMemberBar();
+    if (ACCT.purpose === 'claim' && ACCT.resultCode) {
+      handleDeposit(res.deposit, ACCT.resultCode);
+    } else {
+      showCredits();
+    }
+  }
+
+  // ===== 我的購物金 =====
+  function showCredits() {
+    if (!AUTH) { startAccount('login'); return; }
+    showPage('screen-credits');
+    renderMemberBar();
+    const el = document.getElementById('screen-credits');
+    el.innerHTML = '<div class="final-msg">讀取中…</div>';
+    callGasApi('myCredits', { token: token() }).then(function (res) {
+      if (!res.ok) {
+        if (res.reason === 'logged_out') {
+          clearAuth();
+          renderMemberBar();
+          showMessage('請重新登入', escapeHtml(res.msg), true);
+          return;
+        }
+        el.innerHTML = '<div class="final-msg">' + escapeHtml(res.msg) + '</div>';
+        return;
+      }
+      if (res.messengerUrl) MESSENGER = res.messengerUrl;
+      renderCredits(res);
+    }).catch(function () {
+      el.innerHTML = '<div class="final-msg">網路好像不太穩，暫時讀不到</div>' +
+        '<button class="btn btn-big" onclick="showCredits()">再試一次</button>';
+    });
+  }
+
+  function renderCredits(res) {
+    const items = res.items || [];
+    const rows = items.map(function (it) {
+      let badge = '';
+      let sub = '';
+      let rowCls = '';
+      if (it.status === 'available') {
+        badge = it.daysLeft <= 7
+          ? '<span class="st st-soon">' + (it.daysLeft <= 0 ? '今天到期' : '還有 ' + it.daysLeft + ' 天到期') + '</span>'
+          : '<span class="st st-available">可使用</span>';
+        sub = '期限至 ' + it.deadlineText;
+      } else if (it.status === 'pending') {
+        badge = '<span class="st st-pending">待驗證</span>';
+        sub = '期限至 ' + it.deadlineText;
+        rowCls = 'pending-row';
+      } else if (it.status === 'used') {
+        badge = '<span class="st st-used">已使用</span>';
+        sub = it.settledDate ? it.settledDate + ' 結清' : '';
+        rowCls = 'dim';
+      } else {
+        badge = '<span class="st st-expired">已過期</span>';
+        sub = '期限 ' + it.deadlineText;
+        rowCls = 'dim';
+      }
+      return '<div class="credit-item ' + rowCls + '"><div class="ci-left">' + escapeHtml(it.date) + ' 有獎問答' + badge +
+        '<div class="ci-sub">' + escapeHtml(sub) + '</div></div><div class="ci-amt">' + escapeHtml(it.amount) + ' 元</div></div>';
+    }).join('');
+
+    document.getElementById('screen-credits').innerHTML =
+      '<div class="page-title">🎁 我的購物金</div>' +
+      '<div class="credit-total"><div class="label">可使用購物金</div><div class="num">' + escapeHtml(res.availableTotal) + ' 元</div></div>' +
+      (res.pendingTotal ? '<div class="credit-pending">另有 ' + escapeHtml(res.pendingTotal) + ' 元待驗證</div>' : '') +
+      (res.verified ? '' : verifyBoxHtml()) +
+      (rows ? '<div class="credit-list">' + rows + '</div>' : '<div class="sub-note" style="margin-top:0.833rem;">還沒有購物金，快去玩有獎問答吧！</div>') +
+      '<div class="credit-howto">到門市消費或網購時<br>告訴客服就能折抵</div>' +
+      (MESSENGER ? '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">聯絡客服</a>' : '') +
+      '<button class="link-btn" onclick="goHome()">回首頁</button>';
+  }
+
+  // ===== 啟動 =====
+  function boot() {
+    AUTH = lsGet(AUTH_KEY);
+    if (AUTH && !AUTH.token) AUTH = null;
+    callGasApi('init', { token: token() }).then(function (d) {
+      let logoutMsg = '';
+      if (d.loggedOut) { clearAuth(); logoutMsg = d.loggedOutMsg; }
+      if (d.member && AUTH) saveAuth(AUTH.token, d.member); // 名字、手機以後端為準
+      MESSENGER = d.messengerUrl || '';
+      renderMemberBar();
+
+      if (d.state === 'maintenance') {
+        document.getElementById('gameBanner').style.display = 'none';
+        showMessage('🛠 系統維護中', '請稍後再來' + (d.eta ? '<br>預計恢復時間：' + escapeHtml(d.eta) : ''));
+        return;
+      }
+      renderNotice(logoutMsg);
+      if (d.state === 'not_started') {
+        document.getElementById('gameBanner').style.display = 'none';
+        showMessage('⏳ 活動尚未開始', '請留意粉絲專頁的活動貼文，開始後就能參加喔！', true);
+        return;
+      }
+      ACTIVITY = d.activityCode;
+      STATUS = d.status;
+      CONFIG = d.config || {};
+      FRESH_QUESTIONS = d.freshQuestions || [];
+      DEPOSITED_THIS_PERIOD = !!d.depositedThisPeriod;
+      if (CONFIG.messengerUrl) MESSENGER = CONFIG.messengerUrl;
+      SECONDS = Number(CONFIG.secondsPerQuestion) || 15;
+      PRIZE = Number(CONFIG.prizePerQuestion) || 10;
+      document.querySelectorAll('.deadline-text').forEach(function (el) { el.textContent = d.deadlineText; });
+      document.getElementById('header-deadline').style.display = 'block';
+      const fbAccount = String(MESSENGER || '').replace(/^https?:\/\/m\.me\//, '');
+      if (fbAccount && fbAccount !== MESSENGER) {
+        document.getElementById('fb-link').innerHTML =
+          '<a href="https://www.facebook.com/' + escapeHtml(fbAccount) + '" target="_blank" rel="noopener">粉絲專頁</a>';
+      }
+      init();
+    }).catch(function () {
+      document.getElementById('screen-loading').innerHTML =
+        '<div class="final-msg">網路好像不太穩，暫時連不上 😢</div>' +
+        '<button class="btn btn-big" onclick="location.reload()">重新整理</button>';
+    });
+  }
+
+  boot();
+</script>
+</body>
+</html>
