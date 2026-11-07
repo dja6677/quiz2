@@ -21,7 +21,17 @@
   /* 目前登入列（家人可能共用手機，一直顯示是誰） */
   .member-bar { display: none; background: #eaf2fb; border: 1px solid #c9dcf2; border-radius: 0.417rem; padding: 0.5rem 0.75rem;
     margin-bottom: 0.833rem; font-size: 1rem; line-height: 1.5; text-align: center; color: #234; }
-  .member-bar button { background: none; border: none; color: #1565c0; text-decoration: underline; font-size: 1rem; font-family: inherit; cursor: pointer; padding: 0.25rem; }
+  .member-bar .logout-btn { margin-left: 0.5rem; background: #fff; border: 1px solid #9bb8d8; border-radius: 0.333rem; color: #1565c0;
+    font-size: 0.95rem; font-family: inherit; cursor: pointer; padding: 0.25rem 0.75rem; }
+  /* 大字確認框 */
+  .ask-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+  .ask-box { background: #fff; border-radius: 0.667rem; padding: 1.25rem; width: 100%; max-width: 26rem; text-align: center; }
+  .ask-title { font-size: 1.417rem; font-weight: bold; margin-bottom: 0.667rem; }
+  .ask-body { font-size: 1.125rem; line-height: 1.6; color: #444; margin-bottom: 1rem; }
+  .ask-actions { display: flex; gap: 0.667rem; }
+  .ask-actions button { flex: 1; min-height: 3rem; border: none; border-radius: 0.417rem; font-size: 1.167rem; font-family: inherit; cursor: pointer; }
+  .ask-cancel { background: #4a90d9; color: #fff; font-weight: bold; }
+  .ask-ok { background: #eee; color: #c0392b; }
 
   /* 首頁提醒（未存入的成績） */
   .notice { display: none; border-radius: 0.417rem; padding: 0.75rem; margin-bottom: 0.833rem; font-size: 1.083rem; line-height: 1.6; text-align: center; }
@@ -284,6 +294,17 @@
 <div id="screen-credits" class="card"></div>
 <div id="screen-msg" class="card"></div>
 
+<div class="ask-mask" id="ask-mask">
+  <div class="ask-box">
+    <div class="ask-title" id="ask-title"></div>
+    <div class="ask-body" id="ask-body"></div>
+    <div class="ask-actions">
+      <button class="ask-cancel" id="ask-cancel">取消</button>
+      <button class="ask-ok" id="ask-ok">確定</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ===== 會員版有獎問答前端（V2，GitHub Pages quiz2）=====
   // 後端：會員版問答模組 GAS 的 doPost（問答模組/入口_API.js）。⚠️ 不是 V1 的網址
@@ -363,20 +384,44 @@
   function clearAuth() { AUTH = null; lsDel(AUTH_KEY); }
   function token() { return AUTH ? AUTH.token : ''; }
 
+  // 目前登入列：完整 FB 名＋手機（遮中間三碼），一眼看清楚是誰登入中
   function renderMemberBar() {
     const bar = document.getElementById('member-bar');
     if (!AUTH) { bar.style.display = 'none'; return; }
-    bar.innerHTML = '目前登入：<b>' + escapeHtml(AUTH.name) + '</b>（' + escapeHtml(AUTH.phone) + '）<br>' +
-      '不是你？<button onclick="switchAccount()">切換帳號</button>';
+    bar.innerHTML = '目前登入：<b>' + escapeHtml(AUTH.name) + '</b>（' + escapeHtml(AUTH.phone) + '）' +
+      '<button class="logout-btn" onclick="askLogout()">登出</button>';
     bar.style.display = 'block';
   }
-  // 切換帳號＝登出：清掉這台手機記得的一切（登入、本輪作答、未存入成績），等於重開無痕視窗
-  // 家人共用手機時，下一位可以玩自己的一輪；同一人想靠這個再存一次，存入時後端會擋「本期已存入」
-  function switchAccount() {
-    clearAuth();
-    lsDel(STORE_KEY);
-    lsDel(PENDING_KEY);
-    location.reload();
+
+  // 登出：先確認（登出後玩完不會自動存入）→ 清掉這台手機記得的一切（登入、本輪作答、未存入成績），等於重開無痕視窗
+  // 同一人登出後再玩、再存，後端會擋「本期已存入」
+  function askLogout() {
+    askConfirm('確定要登出嗎？',
+      '登出後，玩完<b>不會自動存入</b>購物金，<br>要再輸入手機和密碼才能存入。<br><br>' +
+      '你的購物金都還在，再登入就看得到。', '登出', '不要登出').then(function (ok) {
+      if (!ok) return;
+      clearAuth();
+      lsDel(STORE_KEY);
+      lsDel(PENDING_KEY);
+      location.reload();
+    });
+  }
+
+  // 大字確認框（阿嬤看得清楚）：askConfirm(標題, 內容HTML, 確定文字, 取消文字).then(ok => ...)
+  function askConfirm(title, bodyHtml, okText, cancelText) {
+    return new Promise(function (resolve) {
+      const mask = document.getElementById('ask-mask');
+      document.getElementById('ask-title').textContent = title;
+      document.getElementById('ask-body').innerHTML = bodyHtml;
+      const ok = document.getElementById('ask-ok');
+      const cancel = document.getElementById('ask-cancel');
+      ok.textContent = okText || '確定';
+      cancel.textContent = cancelText || '取消';
+      const close = function (v) { mask.style.display = 'none'; ok.onclick = null; cancel.onclick = null; resolve(v); };
+      ok.onclick = function () { close(true); };
+      cancel.onclick = function () { close(false); };
+      mask.style.display = 'flex';
+    });
   }
 
   // ===== 未存入的成績 =====
