@@ -146,7 +146,8 @@
   .credit-total { text-align: center; padding: 0.25rem 0 0.583rem; }
   .credit-total .label { font-size: 1.083rem; color: #666; }
   .credit-total .num { font-size: 2.6rem; font-weight: bold; color: #1e8449; line-height: 1.3; }
-  .credit-pending { text-align: center; font-size: 1.125rem; color: #b9770e; font-weight: bold; }
+  .credit-total .num-pending { color: #d35400; }
+  .credit-small { text-align: center; font-size: 1rem; color: #888; }
   .credit-list { margin-top: 0.833rem; border-top: 1px solid #eee; }
   .credit-item { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.667rem 0.25rem; border-bottom: 1px solid #eee; font-size: 1.05rem; line-height: 1.45; }
   .credit-item .ci-left { flex: 1; }
@@ -1274,10 +1275,13 @@
         '<div class="ci-sub">' + escapeHtml(sub) + '</div></div><div class="ci-amt">' + escapeHtml(it.amount) + ' 元</div></div>';
     }).join('');
 
+    // 還沒驗證、有待驗證金額：待驗證金額大字放最上面（強調要去驗證），可使用金額縮小放下面
+    const totals = res.pendingTotal
+      ? '<div class="credit-total"><div class="label">⏳ 待驗證購物金</div><div class="num num-pending">' + escapeHtml(res.pendingTotal) + ' 元</div></div>' +
+        '<div class="credit-small">可使用購物金 ' + escapeHtml(res.availableTotal) + ' 元</div>'
+      : '<div class="credit-total"><div class="label">可使用購物金</div><div class="num">' + escapeHtml(res.availableTotal) + ' 元</div></div>';
     document.getElementById('screen-credits').innerHTML =
-      '<div class="page-title">🎁 我的購物金</div>' +
-      '<div class="credit-total"><div class="label">可使用購物金</div><div class="num">' + escapeHtml(res.availableTotal) + ' 元</div></div>' +
-      (res.pendingTotal ? '<div class="credit-pending">另有 ' + escapeHtml(res.pendingTotal) + ' 元待驗證</div>' : '') +
+      '<div class="page-title">🎁 我的購物金</div>' + totals +
       (res.verified ? '' : verifyBoxHtml()) +
       (rows ? '<div class="credit-list">' + rows + '</div>' : '<div class="sub-note" style="margin-top:0.833rem;">還沒有購物金，快去玩有獎問答吧！</div>') +
       '<div class="credit-howto">到門市消費或網購時<br>告訴客服就能折抵</div>' +
