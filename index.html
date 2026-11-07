@@ -370,8 +370,12 @@
       '不是你？<button onclick="switchAccount()">切換帳號</button>';
     bar.style.display = 'block';
   }
+  // 切換帳號＝登出：清掉這台手機記得的一切（登入、本輪作答、未存入成績），等於重開無痕視窗
+  // 家人共用手機時，下一位可以玩自己的一輪；同一人想靠這個再存一次，存入時後端會擋「本期已存入」
   function switchAccount() {
     clearAuth();
+    lsDel(STORE_KEY);
+    lsDel(PENDING_KEY);
     location.reload();
   }
 
@@ -959,7 +963,12 @@
       return;
     }
     if (r.deposited) {
-      el.innerHTML = note + depositedHtml(r.amount, r.verified, r.claimDeadline);
+      // 再次進來看：手機記的是存入當下的狀態（可能已驗證、已使用），不顯示，一律到「我的購物金」看後端的最新狀態
+      el.innerHTML = isRevisit
+        ? note + '<div class="page-title">🎁 本期購物金已存入</div>' +
+          '<div class="final-msg">購物金的狀態請看「我的購物金」</div>' +
+          '<button class="btn btn-big" onclick="showCredits()">🎁 我的購物金</button>'
+        : depositedHtml(r.amount, r.verified, r.claimDeadline);
       return;
     }
     if (r.depositMsg) {
