@@ -21,7 +21,8 @@
   /* 目前登入列（家人可能共用手機，一直顯示是誰） */
   .member-bar { display: none; background: #eaf2fb; border: 1px solid #c9dcf2; border-radius: 0.417rem; padding: 0.5rem 0.75rem;
     margin-bottom: 0.833rem; font-size: 1rem; line-height: 1.5; text-align: center; color: #234; }
-  .member-bar .logout-btn { margin-left: 0.5rem; background: #fff; border: 1px solid #9bb8d8; border-radius: 0.333rem; color: #1565c0;
+  .member-bar .mb-phone { margin-left: 0.75rem; color: #555; }
+  .member-bar .logout-btn { margin-left: 0.75rem; background: #fff; border: 1px solid #9bb8d8; border-radius: 0.333rem; color: #1565c0;
     font-size: 0.95rem; font-family: inherit; cursor: pointer; padding: 0.25rem 0.75rem; }
   /* 大字確認框 */
   .ask-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
@@ -388,7 +389,8 @@
   function renderMemberBar() {
     const bar = document.getElementById('member-bar');
     if (!AUTH) { bar.style.display = 'none'; return; }
-    bar.innerHTML = '目前登入：<b>' + escapeHtml(AUTH.name) + '</b>（' + escapeHtml(AUTH.phone) + '）' +
+    // 「許宏宇 您好　0936***677　［登出］」
+    bar.innerHTML = '<b>' + escapeHtml(AUTH.name) + '</b> 您好<span class="mb-phone">' + escapeHtml(AUTH.phone) + '</span>' +
       '<button class="logout-btn" onclick="askLogout()">登出</button>';
     bar.style.display = 'block';
   }
