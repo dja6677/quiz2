@@ -21,8 +21,12 @@
   /* 目前登入列（家人可能共用手機，一直顯示是誰） */
   .member-bar { display: none; background: #eaf2fb; border: 1px solid #c9dcf2; border-radius: 0.417rem; padding: 0.5rem 0.75rem;
     margin-bottom: 0.833rem; font-size: 1rem; line-height: 1.5; text-align: center; color: #234; }
-  .member-bar .mb-phone { margin-left: 0.75rem; color: #555; }
-  .member-bar .logout-btn { margin-left: 0.75rem; background: #fff; border: 1px solid #9bb8d8; border-radius: 0.333rem; color: #1565c0;
+  /* 名字靠左；手機＋登出靠右，同一行 */
+  .member-bar { justify-content: space-between; align-items: center; gap: 0.5rem; text-align: left; }
+  .member-bar .mb-name { min-width: 0; word-break: break-all; }
+  .member-bar .mb-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; white-space: nowrap; }
+  .member-bar .mb-phone { color: #555; }
+  .member-bar .logout-btn { background: #fff; border: 1px solid #9bb8d8; border-radius: 0.333rem; color: #1565c0;
     font-size: 0.95rem; font-family: inherit; cursor: pointer; padding: 0.25rem 0.75rem; }
   /* 大字確認框 */
   .ask-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
@@ -390,9 +394,10 @@
     const bar = document.getElementById('member-bar');
     if (!AUTH) { bar.style.display = 'none'; return; }
     // 「許宏宇 您好　0936***677　［登出］」
-    bar.innerHTML = '<b>' + escapeHtml(AUTH.name) + '</b> 您好<span class="mb-phone">' + escapeHtml(AUTH.phone) + '</span>' +
-      '<button class="logout-btn" onclick="askLogout()">登出</button>';
-    bar.style.display = 'block';
+    bar.innerHTML = '<span class="mb-name"><b>' + escapeHtml(AUTH.name) + '</b> 您好</span>' +
+      '<span class="mb-right"><span class="mb-phone">' + escapeHtml(AUTH.phone) + '</span>' +
+      '<button class="logout-btn" onclick="askLogout()">登出</button></span>';
+    bar.style.display = 'flex';
   }
 
   // 登出：先確認（登出後玩完不會自動存入）→ 清掉這台手機記得的一切（登入、本輪作答、未存入成績），等於重開無痕視窗
