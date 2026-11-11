@@ -128,7 +128,14 @@
   .verify-box .vb-title { font-size: 1.25rem; font-weight: bold; }
   .verify-why { margin-top: 0.667rem; font-size: 1rem; color: #6b4a1f; text-align: left; }
   .verify-why summary { cursor: pointer; text-align: center; color: #1565c0; padding: 0.25rem; }
-  .verify-why ul { margin: 0.417rem 0 0; padding-left: 1.25rem; line-height: 1.7; }
+  .verify-why ul, .verify-why ol { margin: 0.417rem 0 0; padding-left: 1.25rem; line-height: 1.7; }
+  .verify-why p { margin: 0.417rem 0 0; line-height: 1.7; }
+  /* 藍色按鈕左邊的手指（左右晃動）＋下方「點按鈕」 */
+  .vb-go { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.583rem; }
+  .vb-go .portal-btn { flex: 1; margin-top: 0; }
+  .vb-hand { display: flex; flex-direction: column; align-items: center; font-size: 0.917rem; font-weight: bold; color: #e67e22; line-height: 1.2; }
+  .vb-hand span { font-size: 2rem; display: inline-block; animation: vb-poke 0.9s ease-in-out infinite; }
+  @keyframes vb-poke { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(0.5rem); } }
   .portal-btn {
     display: flex; align-items: center; justify-content: center; min-height: 3rem; margin-top: 0.583rem; padding: 0.583rem 0.75rem; border-radius: 0.417rem;
     background: #0084ff; color: #fff; font-size: 1.25rem; font-weight: bold; text-decoration: none;
@@ -971,7 +978,15 @@
   function verifyBoxHtml() {
     return '<div class="verify-box"><div class="vb-title">📩 新客要通知客服驗證</div>' +
       '打開後，<b>傳任意一個貼圖</b>就完成了<br>驗證後數小時，購物金就能使用' +
-      (MESSENGER ? '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">通知FB客服驗證</a>' : '') +
+      (MESSENGER ? '<div class="vb-go"><div class="vb-hand"><span>👉</span>點按鈕</div>' +
+        '<a class="portal-btn" href="' + escapeHtml(MESSENGER) + '" target="_blank" rel="noopener">通知FB客服驗證</a></div>' : '') +
+      '<details class="verify-why"><summary>按鈕不會用或不能用怎麼辦？</summary>' +
+        '<p>這個按鈕會<b>直接打開和客服的 FB 私訊</b>，不用自己去找粉專。</p>' +
+        '<p>如果按了沒反應、打不開：</p><ol>' +
+          '<li>打開 FB，搜尋粉專「<b>天生一對 鞋.童裝</b>」</li>' +
+          '<li>按粉專上的〔發送訊息〕</li>' +
+          '<li>傳任意一個貼圖，客服就收到了</li>' +
+      '</ol></details>' +
       '<details class="verify-why"><summary>為何要驗證？</summary><ul>' +
         '<li>從你的 FB 傳貼圖給客服，代表是 FB 上真實的你</li>' +
         '<li>確認是本人，以防購物金被別人冒領</li>' +
